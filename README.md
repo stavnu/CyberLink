@@ -1,2 +1,2 @@
 # CyberLink
-Remote control computers.
+Remote control computers. Educational purposes only!
