@@ -1,8 +1,10 @@
 import socket
-
+from PIL import Image, ImageTk
+import tkinter as tk
+import io
 def start_server():
     host = '127.0.0.1'
-    port = 12345
+    port = 1234
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
@@ -22,5 +24,21 @@ def start_server():
 
 
         print("Client disconnected.")
+def receive_screenshot():
+    host = '127.0.0.1'
+    port = 12345
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(host,port)
+    server_socket.listen(5)
+    the_size_of_the_picture = int(server_socket.recv(1024).decode())
+    picture_bytes = b''
+    while len(picture_bytes) < the_size_of_the_picture:
+            data = server_socket.recv(1024)
+            if not data:
+                break
+            picture_bytes += data
+
+
 
 start_server()
+#receive_screenshot()
