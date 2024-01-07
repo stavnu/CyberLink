@@ -122,9 +122,6 @@ class Server:
             print("ConnectionResetError: Connection forcibly closed by the remote host")
             self.run = False
             self.on_close()
-        finally:
-            # Clean up or handle the closure as needed
-            print("Mouse control thread exiting")
 
     def detect_mouse_command(self):
         return getattr(self, 'last_command', MouseCommands.NOOP)
