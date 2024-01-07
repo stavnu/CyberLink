@@ -3,6 +3,7 @@ import socket
 import struct
 import threading
 
+import keyboard
 import pyautogui
 from pynput.mouse import Controller, Button
 
@@ -69,13 +70,13 @@ class Client:
     def keyboard_controlled(self):
         while self.run:
             key = self.keyboard_socket.recv(1024).decode()
-            if key != "":
+            if key:
                 print("Press key - > ", key)
-                # keyboard.press_and_release(key)
+                keyboard.press_and_release(key)
             else:
                 print("connection lost with server")
                 self.keyboard_socket.close()
-                break
+                self.run = False
 
     def handle_mouse_control(self):
         while self.run:
@@ -142,10 +143,13 @@ class Client:
         # send_screenshot()
         t1 = threading.Thread(target=self.handle_screen_sharing)
         t2 = threading.Thread(target=self.handle_mouse_control)
+        t3 = threading.Thread(target=self.keyboard_controlled)
         t1.start()
         t2.start()
+        t3.start()
         t1.join()
         t2.join()
+        t3.join()
 
     if __name__ == "__main__":
         main()

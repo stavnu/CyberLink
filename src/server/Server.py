@@ -32,6 +32,7 @@ class Server:
     last_command = MouseCommands.NOOP
 
     def __init__(self, screen_port, mouse_port, keyboard_port):
+        self.t2 = None
         self.t1 = None
         self.host_name = socket.gethostname()
         self.host_ip = socket.gethostbyname(self.host_name)
@@ -93,17 +94,16 @@ class Server:
         self.is_focused = self.root.focus_displayof() is not None
 
     def start_keyboard_control(self):
-        print(f"Listening on {self.host_ip}:{self.keyboard_port}")
-        client_socket, client_addr = self.keyboard_socket.accept()
-        print(f"Connection established with {client_addr}")
+        keyboard_socket, addr = self.keyboard_socket.accept()
+        print("Keyboard service connected ", {addr})
         while self.run:
-            if self.is_focused:
-                key = keyboard.read_event()
-                if key.event_type == keyboard.KEY_DOWN:
-                    key_name = key.name
-                    print(f"Key pressed: {key_name}")
-                    message = key_name
-                    client_socket.sendall(message.encode())
+            key = keyboard.read_event()
+            if key.event_type == keyboard.KEY_DOWN:
+                key_name = key.name
+                # print(f"Key pressed: {key_name}")
+                message = key_name
+                if self.is_focused:
+                    keyboard_socket.sendall(message.encode())
 
     def start_mouse_control(self):
         try:
@@ -202,6 +202,8 @@ class Server:
         # receive_screenshot()
         self.t1 = threading.Thread(target=self.start_mouse_control, name="MouseControlThread")
         self.t1.start()
+        self.t2 = threading.Thread(target=self.start_keyboard_control, name="KeyboardControlThread")
+        self.t2.start()
         # Update the focus state every 100 milliseconds
         self.root.after(100, self.update_focus_state)
         self.receive_screenshot()
